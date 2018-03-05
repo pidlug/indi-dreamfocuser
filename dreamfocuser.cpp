@@ -414,7 +414,7 @@ bool DreamFocuser::getTemperature()
   else
     if ( dispatch_command('T') )
     {
-      currentTemperature = ((short int)( (currentResponse.c<<8) | currentResponse.d )) / 10. + 273.;
+      currentTemperature = ((short int)( (currentResponse.c<<8) | currentResponse.d )) / 10. + 273.15;
       currentHumidity = ((short int)( (currentResponse.a<<8) | currentResponse.b )) / 10.;
     }
     else
