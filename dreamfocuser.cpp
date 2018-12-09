@@ -128,7 +128,7 @@ void ISSnoopDevice (XMLEle *root)
 
 DreamFocuser::DreamFocuser()
 {
-  SetFocuserCapability(FOCUSER_CAN_ABS_MOVE | FOCUSER_CAN_REL_MOVE | FOCUSER_CAN_ABORT);
+  FI::SetCapability(FOCUSER_CAN_ABS_MOVE | FOCUSER_CAN_REL_MOVE | FOCUSER_CAN_ABORT);
 
   isAbsolute = false;
   isMoving = false;
