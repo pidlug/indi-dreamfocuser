@@ -54,47 +54,36 @@ public:
   ~DreamFocuser();
 
   // Standard INDI interface functions
-  virtual bool Connect();
-  virtual bool Disconnect();
-  const char *getDefaultName();
-  virtual bool initProperties();
-  virtual bool updateProperties();
-  virtual bool saveConfigItems(FILE *fp);
-  //virtual void ISGetProperties(const char *dev);
-  virtual bool ISNewNumber (const char *dev, const char *name, double values[], char *names[], int n);
-  virtual bool ISNewSwitch (const char *dev, const char *name, ISState *states, char *names[], int n);
+  bool Handshake() override;
+  const char *getDefaultName() override;
+  bool initProperties() override;
+  bool updateProperties() override;
+  bool saveConfigItems(FILE *fp) override;
+  bool ISNewNumber (const char *dev, const char *name, double values[], char *names[], int n) override;
+  bool ISNewSwitch (const char *dev, const char *name, ISState *states, char *names[], int n) override;
 
 protected:
-  virtual void TimerHit();
+  void TimerHit() override;
 
   //virtual bool SetFocuserSpeed(int speed);
-  //virtual IPState MoveFocuser(FocusDirection dir, int speed, uint16_t duration);
-  virtual IPState MoveAbsFocuser(uint32_t ticks);
-  virtual IPState MoveRelFocuser(FocusDirection dir, uint32_t ticks);
-  virtual bool AbortFocuser();
+  IPState MoveAbsFocuser(uint32_t ticks) override;
+  IPState MoveRelFocuser(FocusDirection dir, uint32_t ticks) override;
+  bool AbortFocuser() override;
+  bool SyncFocuser(uint32_t ticks=0) override;
 
 private:
 
   INumber MaxTravelN[1];
   INumberVectorProperty MaxTravelNP;
 
-  INumber MaxPositionN[1];
-  INumberVectorProperty MaxPositionNP;
+  INumber WeatherN[3];
+  INumberVectorProperty WeatherNP;
 
-  INumber EnvironmentN[2];
-  INumberVectorProperty EnvironmentNP;
-
-  ISwitch SyncS[1];
-  ISwitchVectorProperty SyncSP;
-
-  ISwitch ParkS[1];
+  ISwitch ParkS[2];
   ISwitchVectorProperty ParkSP;
 
-  ISwitch StatusS[2];
+  ISwitch StatusS[3];
   ISwitchVectorProperty StatusSP;
-
-  //INumber SetBacklashN[1];
-  //INumberVectorProperty SetBacklashNP;
 
   unsigned char calculate_checksum(DreamFocuserCommand c);
   bool send_command(char k, uint32_t l = 0);
@@ -105,18 +94,18 @@ private:
   bool getStatus();
   bool getPosition();
   bool setPosition(int32_t position);
-  bool setSync(uint32_t position = 0);
   bool setPark();
 
   // Variables
   float focusMoveRequest;
-  string default_port;
-  int fd;
-  float simulatedTemperature, currentTemperature;
-  float simulatedHumidity, currentHumidity;
-  int32_t simulatedPosition, currentPosition;
+  float currentTemperature;
+  float currentHumidity;
+  int32_t currentPosition;
   bool isAbsolute;
   bool isMoving;
+  bool isZero;
+  unsigned char isParked;
+  bool isVcc12V;
   DreamFocuserCommand currentResponse;
 };
 
