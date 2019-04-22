@@ -54,6 +54,18 @@ response - MI000d0z - d = 1: yes, 0: no
 MT00000z - read temperature
 response - MT00cd0z - temperature = ((c<<8)|d)/16.0
 
+MA0000nz - read memory dword - n = address
+response - MAabcd0z(?)
+
+MBabcdnz - write memory dword - abcd = content, n = address
+response - MBabcd0z(?)
+
+MC0000nz - read memory word - n = address
+response - 
+
+MDab00nz - write memory word - ab = content, n = address
+response - 
+
 ----
 
 MR000d0z - move with speed d & 0b1111111 (0 - 127), direction d >> 7 (1 up, 0 down)
@@ -179,6 +191,10 @@ bool DreamFocuser::initProperties()
     //    strcpy(PresetN[1].format, "%6.0f");
     //    strcpy(PresetN[2].format, "%6.0f");
     //    PresetN[0].step = PresetN[1].step = PresetN[2].step = FocusAbsPosN[0].step = DREAMFOCUSER_STEP_SIZE;
+
+    // Maximum position can't be changed from driver
+    FocusMaxPosNP.p = IP_RO;
+
     FocusAbsPosN[0].value = 0;
     FocusRelPosN[0].min = -FocusMaxPosN[0].max;
     FocusRelPosN[0].max = FocusMaxPosN[0].max;
@@ -370,6 +386,7 @@ bool DreamFocuser::getStatus()
         isAbsolute = currentResponse.d == 1 ? true : false;
     else
         return false;
+
     return true;
 }
 
@@ -395,6 +412,20 @@ bool DreamFocuser::setPosition( int32_t position)
             LOGF_DEBUG("Moving to position %d", position);
             return true;
         };
+    return false;
+}
+
+bool DreamFocuser::getMaxPosition()
+{
+    if ( dispatch_command('A', 0, 3) )
+    {
+        currentMaxPosition = (currentResponse.a << 24) | (currentResponse.b << 16) | (currentResponse.c << 8) | currentResponse.d;
+        LOGF_DEBUG("getMaxPosition: %d", currentMaxPosition);
+        return true;
+    }
+    else
+      LOG_ERROR("getMaxPosition error");
+
     return false;
 }
 
@@ -520,6 +551,13 @@ void DreamFocuser::TimerHit()
     int oldAbsStatus = FocusAbsPosNP.s;
     int32_t oldPosition = currentPosition;
 
+    if ( getMaxPosition() )
+        if ( FocusMaxPosN[0].value != currentMaxPosition ) {
+            FocusMaxPosN[0].value = currentMaxPosition;
+            IDSetNumber(&FocusMaxPosNP, nullptr);
+            SetFocuserMaxPosition(currentMaxPosition);
+        }
+
     if ( getStatus() )
     {
 
@@ -634,11 +672,11 @@ unsigned char DreamFocuser::calculate_checksum(DreamFocuserCommand c)
     unsigned char z;
 
     // calculate checksum
-    z = (c.M + c.k + c.a + c.b + c.c + c.d + c.n) & 0xff;
+    z = (c.M + c.k + c.a + c.b + c.c + c.d + c.addr) & 0xff;
     return z;
 }
 
-bool DreamFocuser::send_command(char k, uint32_t l)
+bool DreamFocuser::send_command(char k, uint32_t l, unsigned char addr)
 {
     DreamFocuserCommand c;
     int err_code = 0, nbytes_written = 0;
@@ -672,15 +710,29 @@ bool DreamFocuser::send_command(char k, uint32_t l)
             c.c = 0;
             c.d = x[0];
             break;
+        case 'A':
+        case 'C':
+            c.a = 0;
+            c.b = 0;
+            c.c = 0;
+            c.d = x[0];
+            break;
+        case 'B':
+        case 'D':
+            c.a = x[3];
+            c.b = x[2];
+            c.c = 0;
+            c.d = x[0];
+            break;
         default:
             DEBUGF(INDI::Logger::DBG_ERROR, "Unknown command: '%c'", k);
             return false;
     }
     c.k = k;
-    c.n = '\0';
+    c.addr = addr;
     c.z = calculate_checksum(c);
 
-    LOGF_DEBUG("Sending command: c=%c, a=%hhu, b=%hhu, c=%hhu, d=%hhu ($%hhx), n=%hhu, z=%hhu", c.k, c.a, c.b, c.c, c.d, c.d, c.n, c.z);
+    LOGF_DEBUG("Sending command: c=%c, a=%hhu, b=%hhu, c=%hhu, d=%hhu ($%hhx), n=%hhu, z=%hhu", c.k, c.a, c.b, c.c, c.d, c.d, c.addr, c.z);
 
     tcflush(PortFD, TCIOFLUSH);
 
@@ -710,7 +762,7 @@ bool DreamFocuser::read_response()
         LOGF_ERROR("TTY error detected: %s", err_msg);
         return false;
     }
-    LOGF_DEBUG("Response: %c, a=%hhu, b=%hhu, c=%hhu, d=%hhu ($%hhx), n=%hhu, z=%hhu", currentResponse.k, currentResponse.a, currentResponse.b, currentResponse.c, currentResponse.d, currentResponse.d, currentResponse.n, currentResponse.z);
+    LOGF_DEBUG("Response: %c, a=%hhu, b=%hhu, c=%hhu, d=%hhu ($%hhx), n=%hhu, z=%hhu", currentResponse.k, currentResponse.a, currentResponse.b, currentResponse.c, currentResponse.d, currentResponse.d, currentResponse.addr, currentResponse.z);
 
     if ( nbytes_read != sizeof(currentResponse) )
     {
@@ -740,10 +792,10 @@ bool DreamFocuser::read_response()
     return true;
 }
 
-bool DreamFocuser::dispatch_command(char k, uint32_t l)
+bool DreamFocuser::dispatch_command(char k, uint32_t l, unsigned char addr)
 {
     LOG_DEBUG("send_command");
-    if ( send_command(k, l) )
+    if ( send_command(k, l, addr) )
     {
         if ( read_response() )
         {
