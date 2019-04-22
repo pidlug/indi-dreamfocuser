@@ -92,7 +92,7 @@ class DreamFocuser : public INDI::Focuser
         bool getStatus();
         bool getPosition();
         bool setPosition(int32_t position);
-        bool setSync(int32_t position = 0);
+        bool setSync(uint32_t position = 0);
         bool setPark();
 
        // Variables
