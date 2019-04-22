@@ -539,13 +539,13 @@ void DreamFocuser::TimerHit()
 
         if ( isParked == 1 )
         {
-            ParkSP[2].s = IPS_BUSY;
+            ParkSP.s = IPS_BUSY;
             StatusS[2].s = ISS_ON;
             ParkS[0].s = ISS_ON;
         }
         else if ( isParked == 2 )
         {
-            ParkSP[2].s = IPS_OK;
+            ParkSP.s = IPS_OK;
             StatusS[2].s = ISS_ON;
             ParkS[0].s = ISS_ON;
         }
@@ -553,7 +553,7 @@ void DreamFocuser::TimerHit()
         {
             StatusS[2].s = ISS_OFF;
             ParkS[1].s = ISS_ON;
-            ParkSP[2].s = IPS_IDLE;
+            ParkSP.s = IPS_IDLE;
         }
 
         if ( isAbsolute )
