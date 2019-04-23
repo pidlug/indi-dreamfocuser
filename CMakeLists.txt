@@ -10,6 +10,7 @@ set(BIN_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/bin")
 
 find_package(INDI REQUIRED)
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/indi_dreamfocuser_focus.xml.cmake ${CMAKE_CURRENT_BINARY_DIR}/indi_dreamfocuser_focus.xml)
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR})

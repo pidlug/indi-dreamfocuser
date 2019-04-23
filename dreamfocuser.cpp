@@ -34,6 +34,7 @@
 #include <indicom.h>
 
 #include "dreamfocuser.h"
+#include "config.h"
 #include "connectionplugins/connectionserial.h"
 
 /*
@@ -142,6 +143,9 @@ DreamFocuser::DreamFocuser()
     isMoving = false;
     isParked = 0;
     isVcc12V = false;
+
+    setVersion(DREAMFOCUSER_VERSION_MAJOR, DREAMFOCUSER_VERSION_MINOR);
+
 }
 
 bool DreamFocuser::initProperties()
