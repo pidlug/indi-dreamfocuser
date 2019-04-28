@@ -63,7 +63,7 @@ class DreamFocuser : public INDI::Focuser
     protected:
         virtual bool Handshake() override;
         virtual void TimerHit() override;
-        virtual bool SyncFocuser(uint32_t ticks) override;
+        virtual bool SyncFocuser(uint32_t ticks);
 
         virtual IPState MoveAbsFocuser(uint32_t ticks) override;
         virtual IPState MoveRelFocuser(FocusDirection dir, uint32_t ticks) override;
@@ -82,6 +82,12 @@ class DreamFocuser : public INDI::Focuser
 
         //INumber SetBacklashN[1];
         //INumberVectorProperty SetBacklashNP;
+
+        ISwitch SyncS[3];
+        ISwitchVectorProperty SyncSP;
+
+        INumber FocusMaxPosN[1];
+        INumberVectorProperty FocusMaxPosNP;
 
         unsigned char calculate_checksum(DreamFocuserCommand c);
         bool send_command(char k, uint32_t l = 0, unsigned char addr = 0);

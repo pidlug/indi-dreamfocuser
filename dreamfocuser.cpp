@@ -137,7 +137,7 @@ void ISSnoopDevice (XMLEle *root)
 
 DreamFocuser::DreamFocuser()
 {
-    FI::SetCapability(FOCUSER_CAN_ABS_MOVE | FOCUSER_CAN_REL_MOVE | FOCUSER_CAN_ABORT | FOCUSER_CAN_SYNC);
+    FI::SetCapability(FOCUSER_CAN_ABS_MOVE | FOCUSER_CAN_REL_MOVE | FOCUSER_CAN_ABORT);
 
     isAbsolute = false;
     isMoving = false;
@@ -158,16 +158,16 @@ bool DreamFocuser::initProperties()
     //FocusSpeedN[0].value = 50;
     //IUUpdateMinMax(&FocusSpeedNP);
 
-    // Max Position
-    //    IUFillNumber(&MaxPositionN[0], "MAXPOSITION", "Ticks", "%.f", 1., 500000., 1000., 300000);
-    //    IUFillNumberVector(&MaxPositionNP, MaxPositionN, 1, getDeviceName(), "MAXPOSITION", "Max Absolute Position", FOCUS_SETTINGS_TAB, IP_RW, 0, IPS_IDLE);
+    // Focuser maximum position
+    IUFillNumber(&FocusMaxPosN[0], "FOCUS_MAX_VALUE", "Max. Position", "%d", 0, 999999999, 0, 0);
+    IUFillNumberVector(&FocusMaxPosNP, FocusMaxPosN, 1, getDeviceName(), "FOCUS_MAX", "Max. Position", MAIN_CONTROL_TAB, IP_RO, 0, IPS_IDLE);
 
     //    IUFillNumber(&MaxTravelN[0], "MAXTRAVEL", "Ticks", "%.f", 1., 500000., 1000., 300000.);
     //    IUFillNumberVector(&MaxTravelNP, MaxTravelN, 1, getDeviceName(), "MAXTRAVEL", "Max Relative Travel", FOCUS_SETTINGS_TAB, IP_RW, 0, IPS_IDLE );
 
-    //    // Focus Sync
-    //    IUFillSwitch(&SyncS[0], "SYNC", "Synchronize", ISS_OFF);
-    //    IUFillSwitchVector(&SyncSP, SyncS, 1, getDeviceName(), "SYNC", "Synchronize", MAIN_CONTROL_TAB, IP_RW, ISR_ATMOST1, 60, IPS_IDLE);
+    // Focus Sync
+    IUFillSwitch(&SyncS[0], "SYNC", "Synchronize", ISS_OFF);
+    IUFillSwitchVector(&SyncSP, SyncS, 1, getDeviceName(), "SYNC", "Synchronize", MAIN_CONTROL_TAB, IP_RW, ISR_ATMOST1, 60, IPS_IDLE);
 
     // Focus Park
     IUFillSwitch(&ParkS[PARK_PARK], "PARK", "Park", ISS_OFF);
@@ -218,20 +218,20 @@ bool DreamFocuser::updateProperties()
 
     if (isConnected())
     {
-        //defineSwitch(&SyncSP);
+        defineSwitch(&SyncSP);
         defineSwitch(&ParkSP);
         defineNumber(&WeatherNP);
         defineSwitch(&StatusSP);
-        //defineNumber(&MaxPositionNP);
+        defineNumber(&FocusMaxPosNP);
         //defineNumber(&MaxTravelNP);
     }
     else
     {
-        //deleteProperty(SyncSP.name);
+        deleteProperty(SyncSP.name);
         deleteProperty(ParkSP.name);
         deleteProperty(WeatherNP.name);
         deleteProperty(StatusSP.name);
-        //deleteProperty(MaxPositionNP.name);
+        deleteProperty(FocusMaxPosNP.name);
         //deleteProperty(MaxTravelNP.name);
     }
     return true;
@@ -561,7 +561,7 @@ void DreamFocuser::TimerHit()
             FocusMaxPosN[0].value = currentMaxPosition;
             FocusMaxPosNP.s = IPS_OK;
             IDSetNumber(&FocusMaxPosNP, nullptr);
-            SetFocuserMaxPosition(currentMaxPosition);
+            //SetFocuserMaxPosition(currentMaxPosition);
         }
     }
     else
